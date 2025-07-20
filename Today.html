@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘의 날짜 찾기</title>
+  <style>
+    body {
+      font-family: '맑은 고딕', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #main {
+      padding: 20px;
+      min-height: 100vh;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 8px;
+      position: relative;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+
+    .today-button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      border-radius: 50%;
+    }
+
+    .normal-button {
+      background-color: #f0f0f0;
+    }
+
+    .star-sticker {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      cursor: grab;
+      z-index: 10;
+    }
+
+    .result-box, .diary-box {
+      background-color: rgba(255, 255, 255, 0.8);
+      display: inline-block;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    h2 {
+      background-color: rgba(255,255,255,0.6);
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .nav-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      background-color: #ffd54f;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<h2>오늘의 날짜 찾기</h2>
+<div id="main"></div>
+
+<!-- 별 스티커 이미지 -->
+<img src="star.png" id="star" class="star-sticker">
+
+<!-- 효과음 오디오 추가 -->
+<audio id="correctSound" src="correct.mp3"></audio>
+
+<script>
+  function generateCalendar() {
+    const mainEl = document.getElementById('main');
+    mainEl.style.backgroundImage = "url('SUNFlower.jpg')";
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+    const today = now.getDate();
+
+    const firstDay = new Date(year, month, 1).getDay(); // 요일 (0=일요일)
+    const lastDate = new Date(year, month + 1, 0).getDate(); // 마지막 날짜
+
+    let html = `<table>
+      <tr><th colspan="7">${year}년 ${month + 1}월</th></tr>
+      <tr>
+        <th>일</th><th>월</th><th>화</th><th>수</th>
+        <th>목</th><th>금</th><th>토</th>
+      </tr>
+      <tr>
+    `;
+
+    // 빈칸 삽입
+    for (let i = 0; i < firstDay; i++) {
+      html += "<td></td>";
+    }
+
+    // 날짜 버튼 채우기
+    for (let date = 1; date <= lastDate; date++) {
+      const dayOfWeek = (firstDay + date - 1) % 7;
+      const isToday = (date === today);
+      const btnClass = isToday ? "today-button" : "normal-button";
+
+      html += `<td>
+        <div style="position: relative;">
+          <button class="${btnClass}" onclick="checkDate(${date})">${date}</button>
+        </div>
+      </td>`;
+
+      if (dayOfWeek === 6 && date !== lastDate) {
+        html += "</tr><tr>";
+      }
+    }
+
+    // 마지막 줄 빈칸 삽입
+    const remaining = (7 - (firstDay + lastDate) % 7) % 7;
+    for (let i = 0; i < remaining; i++) {
+      html += "<td></td>";
+    }
+
+    html += "</tr></table>";
+
+    html += `<br><button class="nav-button" onclick="showDiary()">다음화면</button>`;
+
+    mainEl.innerHTML = html;
+
+    // 별 스티커를 오늘 날짜 버튼 위로 이동
+    setTimeout(() => {
+      const todayBtn = document.querySelector('.today-button');
+      const star = document.getElementById('star');
+      const rect = todayBtn.getBoundingClientRect();
+      const mainRect = mainEl.getBoundingClientRect();
+
+      star.style.left = (rect.left - mainRect.left + todayBtn.offsetWidth/2 - star.offsetWidth/2) + 'px';
+      star.style.top = (rect.top - mainRect.top - star.offsetHeight/2) + 'px';
+      star.style.display = 'block';
+    }, 100);
+  }
+
+  function checkDate(selectedDate) {
+    const now = new Date();
+    const today = now.getDate();
+    const mainEl = document.getElementById('main');
+
+    mainEl.style.backgroundImage = "url('SUNFlower.jpg')";
+
+    let message = "";
+    if (selectedDate === today) {
+      message = "오늘의 날짜가 맞습니다.";
+      document.getElementById('correctSound').play(); // 효과음 재생
+    } else {
+      message = "오늘의 날짜가 아닙니다.";
+    }
+
+    mainEl.innerHTML = `
+      <div class="result-box">
+        <h3>${message}</h3>
+        <button onclick="generateCalendar()">메인화면</button>
+      </div>
+    `;
+
+    // 별 스티커 숨김 (결과화면에 표시 안되도록)
+    document.getElementById('star').style.display = 'none';
+  }
+
+  function showDiary() {
+    const mainEl = document.getElementById('main');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
+    const day = ['일','월','화','수','목','금','토'][now.getDay()];
+
+    mainEl.style.backgroundImage = "url('SUNFlower.jpg')";
+
+    mainEl.innerHTML = `
+      <div class="diary-box">
+        <h3>오늘은 ${year}년 ${month}월 ${date}일 (${day}) 입니다.</h3>
+        <p>오늘의 일기를 써보세요.</p>
+        <textarea rows="5" cols="30" placeholder="여기에 작성"></textarea><br><br>
+        <button class="nav-button" onclick="generateCalendar()">메인화면</button>
+      </div>
+    `;
+
+    // 별 스티커 숨김
+    document.getElementById('star').style.display = 'none';
+  }
+
+  generateCalendar();
+
+  // 드래그 앤 드롭 기능 수정
+  const star = document.getElementById('star');
+  let isDragging = false;
+
+  star.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    star.style.cursor = 'grabbing';
+    moveStar(e);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      moveStar(e);
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    star.style.cursor = 'grab';
+  });
+
+  function moveStar(e) {
+    const mainRect = document.getElementById('main').getBoundingClientRect();
+    let x = e.clientX - mainRect.left - star.offsetWidth / 2;
+    let y = e.clientY - mainRect.top - star.offsetHeight / 2;
+
+    // boundary check
+    x = Math.max(0, Math.min(mainRect.width - star.offsetWidth, x));
+    y = Math.max(0, Math.min(mainRect.height - star.offsetHeight, y));
+
+    star.style.left = x + 'px';
+    star.style.top = y + 'px';
+  }
+</script>
+
+</body>
+</html>
