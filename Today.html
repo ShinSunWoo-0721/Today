@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>달력 날짜 확인</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    .start-screen {
+      background-image: url('start.png');
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .start-button, .back-button, .date-button {
+      font-weight: bold;
+      border: none;
+      border-radius: 2vw;
+      cursor: pointer;
+    }
+    .start-button, .back-button {
+      background-color: #F28C50;
+      color: white;
+      width: 25vw;
+      max-width: 250px;
+      height: 9vh;
+      max-height: 80px;
+      font-size: 3vw;
+      margin-bottom: 10vh;
+    }
+    .start-button:hover, .back-button:hover {
+      background-color: #e47c3f;
+    }
+    .date-button {
+      background-color: transparent;
+      color: black;
+      width: 100%;
+      padding: 1vh 0;
+      font-size: 3vw;
+    }
+    .calendar-screen, .result-screen {
+      background-image: url('main.png');
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      overflow: auto;
+      padding: 2vh;
+    }
+    .calendar-container, .result-container {
+      background-color: rgba(255,255,255,0.8);
+      padding: 2vh 2vw;
+      border-radius: 2vw;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+    }
+    #monthTitle {
+      font-size: 4vw;
+      font-weight: bold;
+      margin-bottom: 2vh;
+    }
+    table.calendar {
+      border-collapse: collapse;
+      width: 100%;
+      text-align: center;
+      font-size: 3vw;
+    }
+    table.calendar th {
+      background-color: #F28C50;
+      color: white;
+      padding: 1vh 0;
+      border: 1px solid #ddd;
+    }
+    table.calendar td {
+      padding: 0;
+      border: 1px solid #ddd;
+      height: 6vh;
+    }
+    .result-message {
+      font-size: 4vw;
+      margin: 3vh 0;
+    }
+    @media (min-width: 768px) {
+      .start-button, .back-button {
+        font-size: 20px;
+      }
+      .date-button {
+        font-size: 18px;
+      }
+      #monthTitle {
+        font-size: 24px;
+      }
+      .result-message {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 시작 화면 -->
+  <div class="screen start-screen" id="startScreen">
+    <button class="start-button" onclick="goToCalendar()">시작하기</button>
+  </div>
+
+  <!-- 달력 화면 -->
+  <div class="screen calendar-screen" id="calendarScreen">
+    <div class="calendar-container">
+      <div id="monthTitle"></div>
+      <table class="calendar" id="calendarTable">
+        <!-- 달력 내용 JS로 삽입 -->
+      </table>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen result-screen" id="resultScreen">
+    <div class="result-container">
+      <div id="resultMessage" class="result-message"></div>
+      <button class="back-button" onclick="goBackToCalendar()">메인화면</button>
+    </div>
+  </div>
+
+  <script>
+    // 시작 시 시작화면 표시
+    document.getElementById("startScreen").style.display = "flex";
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth(); // 0-based
+
+    function goToCalendar() {
+      document.getElementById("startScreen").style.display = "none";
+      document.getElementById("calendarScreen").style.display = "flex";
+      generateCalendar();
+    }
+
+    function goBackToCalendar() {
+      document.getElementById("resultScreen").style.display = "none";
+      document.getElementById("calendarScreen").style.display = "flex";
+    }
+
+    function generateCalendar() {
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+
+      document.getElementById("monthTitle").innerText = `${year}년 ${month + 1}월`;
+
+      const calendarTable = document.getElementById("calendarTable");
+      calendarTable.innerHTML = "";
+
+      // 요일 헤더
+      const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
+      const headerRow = document.createElement("tr");
+      for (let day of daysOfWeek) {
+        const th = document.createElement("th");
+        th.innerText = day;
+        headerRow.appendChild(th);
+      }
+      calendarTable.appendChild(headerRow);
+
+      // 날짜 버튼
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+          const cell = document.createElement("td");
+          if (i === 0 && j < startDay) {
+            cell.innerHTML = "";
+          } else if (date > totalDays) {
+            cell.innerHTML = "";
+          } else {
+            const btn = document.createElement("button");
+            btn.className = "date-button";
+            btn.innerText = date;
+            btn.onclick = function() { checkDate(date); };
+            cell.appendChild(btn);
+            date++;
+          }
+          row.appendChild(cell);
+        }
+        calendarTable.appendChild(row);
+        if (date > totalDays) break;
+      }
+    }
+
+    function checkDate(selectedDate) {
+      const todayNow = new Date(); // 클릭 시점 기준 오늘
+      const todayDate = todayNow.getDate();
+
+      document.getElementById("calendarScreen").style.display = "none";
+      document.getElementById("resultScreen").style.display = "flex";
+
+      if (Number(selectedDate) === todayDate) {
+        document.getElementById("resultMessage").innerText = "오늘의 날짜가 맞습니다.";
+      } else {
+        document.getElementById("resultMessage").innerText = "오늘의 날짜가 아닙니다.";
+      }
+    }
+  </script>
+
+</body>
+</html>
