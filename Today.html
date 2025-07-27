@@ -2,218 +2,344 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>달력 날짜 확인</title>
+  <title>달력과 수첩화면</title>
   <style>
-    html, body {
+    body, html {
       margin: 0;
       padding: 0;
       height: 100%;
-      width: 100%;
+      font-family: sans-serif;
     }
     .screen {
-      display: none;
       width: 100%;
       height: 100%;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-    .start-screen {
-      background-image: url('start.png');
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-    }
-    .start-button, .back-button, .date-button {
-      font-weight: bold;
-      border: none;
-      border-radius: 2vw;
-      cursor: pointer;
-    }
-    .start-button, .back-button {
-      background-color: #F28C50;
-      color: white;
-      width: 25vw;
-      max-width: 250px;
-      height: 9vh;
-      max-height: 80px;
-      font-size: 3vw;
-      margin-bottom: 10vh;
-    }
-    .start-button:hover, .back-button:hover {
-      background-color: #e47c3f;
-    }
-    .date-button {
-      background-color: transparent;
-      color: black;
-      width: 100%;
-      padding: 1vh 0;
-      font-size: 3vw;
-    }
-    .calendar-screen, .result-screen {
-      background-image: url('main.png');
-      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
       justify-content: center;
       align-items: center;
       flex-direction: column;
-      overflow: auto;
-      padding: 2vh;
     }
-    .calendar-container, .result-container {
-      background-color: rgba(255,255,255,0.8);
-      padding: 2vh 2vw;
-      border-radius: 2vw;
-      width: 90%;
-      max-width: 600px;
-      text-align: center;
+    /* 시작 화면: 버튼을 화면 하단 중앙에 배치 */
+    .start-screen {
+      background-image: url('start.png');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 40px;
     }
-    #monthTitle {
-      font-size: 4vw;
-      font-weight: bold;
-      margin-bottom: 2vh;
+    .calendar-screen,
+    .result-screen,
+    .wrong-screen,
+    .sticker-screen {
+      background-image: url('main.png');
+      background-size: cover;
+      background-position: center;
     }
-    table.calendar {
-      border-collapse: collapse;
-      width: 100%;
-      text-align: center;
-      font-size: 3vw;
-    }
-    table.calendar th {
-      background-color: #F28C50;
+    .start-button,
+    .back-button {
+      background-color: #F28B53;
       color: white;
-      padding: 1vh 0;
-      border: 1px solid #ddd;
+      font-size: 24px;
+      font-weight: bold;
+      border: none;
+      border-radius: 20px;
+      padding: 15px 40px;
+      cursor: pointer;
+      margin: 0;
     }
-    table.calendar td {
-      padding: 0;
-      border: 1px solid #ddd;
-      height: 6vh;
+    .start-button:hover,
+    .back-button:hover {
+      background-color: #e2783f;
     }
-    .result-message {
-      font-size: 4vw;
-      margin: 3vh 0;
+    .month-title {
+      text-align: center;
+      font-size: 36px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #333;
     }
-    @media (min-width: 768px) {
-      .start-button, .back-button {
-        font-size: 20px;
-      }
-      .date-button {
-        font-size: 18px;
-      }
-      #monthTitle {
-        font-size: 24px;
-      }
-      .result-message {
-        font-size: 24px;
-      }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      width: 90%;
+      max-width: 800px;
+      justify-items: center;
+      align-items: center;
+    }
+    .weekday-header {
+      background-color: rgba(100, 149, 237, 0.8);
+      color: white;
+      border-radius: 10px;
+      text-align: center;
+      padding: 20px 0;
+      font-size: 18px;
+      font-weight: bold;
+      width: 100%;
+    }
+    .day-button {
+      background-color: rgba(255,255,255,0.8);
+      border: none;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 20px 0;
+      width: 100%;
+      cursor: pointer;
+    }
+    .day-button:hover {
+      background-color: rgba(200,200,200,0.8);
+    }
+    @keyframes blink {
+      0%   { background-color: rgba(255, 0, 0, 0.8); }
+      50%  { background-color: rgba(255, 200, 200, 0.8); }
+      100% { background-color: rgba(255, 0, 0, 0.8); }
+    }
+    .today {
+      animation: blink 1s infinite;
+      color: white;
+    }
+    .result-text {
+      font-size: 36px;
+      font-weight: bold;
+      color: #333;
+      background-color: rgba(255,255,255,0.8);
+      padding: 20px 40px;
+      border-radius: 20px;
+    }
+    /* 수첩 화면 – 사진추가 버튼 & 스티커 */
+    .add-image-button {
+      width: 60px;
+      height: auto;
+      cursor: pointer;
+      margin: 10px;
+    }
+    #dragImage,
+    #dragImage1,
+    #dragImage2,
+    #dragImage3,
+    #dragImage4 {
+      display: none;
+      position: absolute;
+      width: 100px;
+      height: auto;
+      z-index: 999;
+      cursor: move;
+    }
+    .calendar-bottom {
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
+  <!-- 시작 화면 음원: 01.mp3 -->
+  <audio id="startAudio" src="01.mp3"></audio>
+  <!-- 결과 재생 음원 -->
+  <audio id="audio" src="correct.mp3"></audio>
+  <!-- 정답 재생 음원 -->
+  <audio id="OkAudio" src="03.mp3"></audio>
+  <!-- 오답 재생 음원 -->
+  <audio id="NgAudio" src="02.mp3"></audio>
+  <!-- 스티커 화면 음원: 04.mp3 -->
+  <audio id="stikerAudio" src="04.mp3"></audio>
+
 
   <!-- 시작 화면 -->
   <div class="screen start-screen" id="startScreen">
-    <button class="start-button" onclick="goToCalendar()">시작하기</button>
+    <button class="start-button" onclick="showCalendar()">시작하기</button>
   </div>
 
   <!-- 달력 화면 -->
   <div class="screen calendar-screen" id="calendarScreen">
-    <div class="calendar-container">
-      <div id="monthTitle"></div>
-      <table class="calendar" id="calendarTable">
-        <!-- 달력 내용 JS로 삽입 -->
-      </table>
+    <div class="month-title" id="monthTitle"></div>
+    <div class="calendar" id="calendar"></div>
+    <div class="calendar-bottom">
+      <button class="back-button" onclick="goHome()">홈화면</button>
+      <button class="back-button" onclick="showSticker()">수첩화면</button>
     </div>
   </div>
 
-  <!-- 결과 화면 -->
+  <!-- 정답 화면 -->
   <div class="screen result-screen" id="resultScreen">
-    <div class="result-container">
-      <div id="resultMessage" class="result-message"></div>
-      <button class="back-button" onclick="goBackToCalendar()">메인화면</button>
+    <div class="result-text">오늘 날짜가 맞습니다.</div>
+    <button class="back-button" onclick="goBack()">이전</button>
+  </div>
+
+  <!-- 오답 화면 -->
+  <div class="screen wrong-screen" id="wrongScreen">
+    <div class="result-text">오늘 날짜가 아닙니다.</div>
+    <button class="back-button" onclick="goBack()">이전</button>
+  </div>
+
+  <!-- 스티커 화면 -->
+  <div class="screen sticker-screen" id="stickerScreen">
+    <div class="month-title" id="stickerMonthTitle"></div>
+    <div class="calendar" id="stickerCalendar"></div>
+    <div class="calendar-bottom">
+      <button class="back-button" onclick="goBackFromSticker()">이전</button>
+      <img src="star.png"   alt="사진 추가"  class="add-image-button" onclick="addImage()" />
+      <img src="happy.png"  alt="사진 추가1" class="add-image-button" onclick="addImage1()" />
+      <img src="Dream.png"  alt="사진 추가2" class="add-image-button" onclick="addImage2()" />
+      <img src="hope.png"   alt="사진 추가3" class="add-image-button" onclick="addImage3()" />
+      <img src="LOVE.png"   alt="사진 추가4" class="add-image-button" onclick="addImage4()" />
     </div>
+    <img id="dragImage"  src="star.png"   alt="스티커" />
+    <img id="dragImage1" src="happy.png"  alt="스티커1" />
+    <img id="dragImage2" src="Dream.png"  alt="스티커2" />
+    <img id="dragImage3" src="hope.png"   alt="스티커3" />
+    <img id="dragImage4" src="LOVE.png"   alt="스티커4" />
   </div>
 
   <script>
-    // 시작 시 시작화면 표시
-    document.getElementById("startScreen").style.display = "flex";
+    let todayDate;
+    let isDragging = false, offsetX = 0, offsetY = 0, currentDrag = null;
+    const startAudio = document.getElementById("startAudio");
+    const audio      = document.getElementById("audio");
+    const OkAudio = document.getElementById("OkAudio");
+    const NgAudio = document.getElementById("NgAudio");
+    const stikerAudio = document.getElementById("stikerAudio");
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth(); // 0-based
+    function showCalendar() {
+      // 클릭 시 01.mp3를 한 번만 재생
+      startAudio.currentTime = 0;
+      startAudio.play();
 
-    function goToCalendar() {
-      document.getElementById("startScreen").style.display = "none";
-      document.getElementById("calendarScreen").style.display = "flex";
-      generateCalendar();
-    }
+      document.getElementById('startScreen').style.display    = 'none';
+      document.getElementById('calendarScreen').style.display = 'flex';
 
-    function goBackToCalendar() {
-      document.getElementById("resultScreen").style.display = "none";
-      document.getElementById("calendarScreen").style.display = "flex";
-    }
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+      ['일','월','화','수','목','금','토'].forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'weekday-header';
+        div.textContent = d;
+        calendar.appendChild(div);
+      });
 
-    function generateCalendar() {
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const startDay = firstDay.getDay();
-      const totalDays = lastDay.getDate();
+      const today  = new Date();
+      const year   = today.getFullYear();
+      const month  = today.getMonth();
+      const date   = today.getDate();
+      todayDate    = date;
+      document.getElementById('monthTitle').textContent = `${year}년 ${month+1}월`;
 
-      document.getElementById("monthTitle").innerText = `${year}년 ${month + 1}월`;
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month+1, 0).getDate();
 
-      const calendarTable = document.getElementById("calendarTable");
-      calendarTable.innerHTML = "";
-
-      // 요일 헤더
-      const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
-      const headerRow = document.createElement("tr");
-      for (let day of daysOfWeek) {
-        const th = document.createElement("th");
-        th.innerText = day;
-        headerRow.appendChild(th);
-      }
-      calendarTable.appendChild(headerRow);
-
-      // 날짜 버튼
-      let date = 1;
-      for (let i = 0; i < 6; i++) {
-        const row = document.createElement("tr");
-        for (let j = 0; j < 7; j++) {
-          const cell = document.createElement("td");
-          if (i === 0 && j < startDay) {
-            cell.innerHTML = "";
-          } else if (date > totalDays) {
-            cell.innerHTML = "";
-          } else {
-            const btn = document.createElement("button");
-            btn.className = "date-button";
-            btn.innerText = date;
-            btn.onclick = function() { checkDate(date); };
-            cell.appendChild(btn);
-            date++;
-          }
-          row.appendChild(cell);
-        }
-        calendarTable.appendChild(row);
-        if (date > totalDays) break;
+      for (let i=0; i<firstDay; i++) calendar.appendChild(document.createElement('div'));
+      for (let i=1; i<=lastDate; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'day-button';
+        btn.textContent = i;
+        if (i === date) btn.classList.add('today');
+        btn.onclick = () => i===todayDate ? showResult() : showWrong();
+        calendar.appendChild(btn);
       }
     }
 
-    function checkDate(selectedDate) {
-      const todayNow = new Date(); // 클릭 시점 기준 오늘
-      const todayDate = todayNow.getDate();
+    function showSticker() {
+      // 클릭 시 04.mp3를 한 번만 재생
+      stikerAudio.currentTime = 0;
+      stikerAudio.play();
 
-      document.getElementById("calendarScreen").style.display = "none";
-      document.getElementById("resultScreen").style.display = "flex";
-
-      if (Number(selectedDate) === todayDate) {
-        document.getElementById("resultMessage").innerText = "오늘의 날짜가 맞습니다.";
-      } else {
-        document.getElementById("resultMessage").innerText = "오늘의 날짜가 아닙니다.";
+      document.getElementById('calendarScreen').style.display = 'none';
+      document.getElementById('stickerScreen').style.display  = 'flex';
+      const stickerCalendar = document.getElementById('stickerCalendar');
+      stickerCalendar.innerHTML = '';
+      ['일','월','화','수','목','금','토'].forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'weekday-header';
+        div.textContent = d;
+        stickerCalendar.appendChild(div);
+      });
+      const today  = new Date();
+      const year   = today.getFullYear();
+      const month  = today.getMonth();
+      const date   = today.getDate();
+      document.getElementById('stickerMonthTitle').textContent = `${year}년 ${month+1}월`;
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month+1, 0).getDate();
+      for (let i=0; i<firstDay; i++) stickerCalendar.appendChild(document.createElement('div'));
+      for (let i=1; i<=lastDate; i++) {
+        const div = document.createElement('div');
+        div.className = 'day-button';
+        div.textContent = i;
+        if (i === date) div.id = 'stickerToday';
+        stickerCalendar.appendChild(div);
       }
     }
+    
+     function goHome() {   
+      document.getElementById('calendarScreen').style.display = 'none';
+      document.getElementById('startScreen').style.display  = 'flex';
+    }
+    function goBack() {
+      ['calendarScreen','resultScreen','wrongScreen','stickerScreen'].forEach(id => {
+        audio.pause()
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById('calendarScreen').style.display = 'flex';
+    }
+    // 수첩 화면에서 이전 누르면 추가된 스티커 모두 숨김
+    function goBackFromSticker() {
+      ['dragImage','dragImage1','dragImage2','dragImage3','dragImage4'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      goBack();
+    }
+    function showResult() { 
+      // 클릭 시 03.mp3를 한 번만 재생
+      OkAudio.currentTime = 0;
+      OkAudio.play();
+
+      goBack(); 
+      document.getElementById('resultScreen').style.display = 'flex'; 
+    }
+    function showWrong()  { 
+       // 클릭 시 04.mp3를 한 번만 재생
+      NgAudio.currentTime = 0;
+      NgAudio.play();
+
+      goBack(); 
+      document.getElementById('wrongScreen').style.display = 'flex';     
+    }
+
+    function addImage()  { currentDrag = document.getElementById("dragImage");  currentDrag.style.display = 'block'; currentDrag.style.left = '50%'; currentDrag.style.top = '50%'; currentDrag.style.transform = 'translate(-50%, -50%)'; }
+    function addImage1() { currentDrag = document.getElementById("dragImage1"); currentDrag.style.display = 'block'; currentDrag.style.left = '50%'; currentDrag.style.top = '50%'; currentDrag.style.transform = 'translate(-50%, -50%)'; }
+    function addImage2() { currentDrag = document.getElementById("dragImage2"); currentDrag.style.display = 'block'; currentDrag.style.left = '50%'; currentDrag.style.top = '50%'; currentDrag.style.transform = 'translate(-50%, -50%)'; }
+    function addImage3() { currentDrag = document.getElementById("dragImage3"); currentDrag.style.display = 'block'; currentDrag.style.left = '50%'; currentDrag.style.top = '50%'; currentDrag.style.transform = 'translate(-50%, -50%)'; }
+    function addImage4() { currentDrag = document.getElementById("dragImage4"); currentDrag.style.display = 'block'; currentDrag.style.left = '50%'; currentDrag.style.top = '50%'; currentDrag.style.transform = 'translate(-50%, -50%)'; }
+
+    ["dragImage","dragImage1","dragImage2","dragImage3","dragImage4"].forEach(id => {
+      const img = document.getElementById(id);
+      img.addEventListener('mousedown', e => {
+        isDragging = true;
+        offsetX = e.clientX - img.offsetLeft;
+        offsetY = e.clientY - img.offsetTop;
+        currentDrag = img;
+      });
+    });
+    document.addEventListener('mousemove', e => {
+      if (!isDragging || !currentDrag) return;
+      currentDrag.style.left = `${e.clientX - offsetX}px`;
+      currentDrag.style.top  = `${e.clientY - offsetY}px`;
+      currentDrag.style.transform = 'translate(0,0)';
+    });
+    document.addEventListener('mouseup', () => {
+      if (!isDragging || !currentDrag) return;
+      isDragging = false;
+      const todayEl = document.getElementById('stickerToday');
+      if (!todayEl) return;
+      const rImg = currentDrag.getBoundingClientRect();
+      const rToday = todayEl.getBoundingClientRect();
+      const overlap = !(rImg.right < rToday.left || rImg.left > rToday.right || rImg.bottom < rToday.top || rImg.top > rToday.bottom);
+      if (overlap) { todayEl.classList.add('today'); audio.currentTime = 0; audio.play(); }
+      else { todayEl.classList.remove('today'); }
+    });
   </script>
-
 </body>
 </html>
